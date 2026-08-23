@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="카이로스">
+<meta name="theme-color" content="#b8860b">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23b8860b'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='9' stroke-linecap='round'%3E%3Ccircle cx='90' cy='92' r='50'/%3E%3Cpath d='M90 60v34l24 14'/%3E%3C/g%3E%3C/svg%3E">
+<title>카이로스</title>
+<style>
+:root{
+  --bg:#faf7f2; --card:#ffffff; --ink:#22201d; --sub:#7a736a; --line:#e8e1d6;
+  --gold:#b8860b; --goldsoft:#fdf6e3; --blue:#2f6f8f; --bluesoft:#eef5f8;
+  --green:#3f7d5b; --greensoft:#eef6f1; --red:#b3524a;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#16151a; --card:#201f26; --ink:#eae7e1; --sub:#9b948a; --line:#33313b;
+    --gold:#d9a534; --goldsoft:#2b2618; --blue:#7db6d3; --bluesoft:#1a2429;
+    --green:#7dc09c; --greensoft:#18241d; --red:#e08b83;
+    --shadow:0 1px 3px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  font-size:16px;line-height:1.6;
+  padding-bottom:calc(78px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust:100%;
+}
+header{
+  position:sticky;top:0;z-index:20;background:var(--bg);
+  padding:calc(14px + env(safe-area-inset-top)) 18px 10px;
+  border-bottom:1px solid var(--line);
+}
+.hrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+h1{font-size:19px;margin:0;letter-spacing:-.3px}
+h1 span{color:var(--gold)}
+.today{font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums;text-align:right}
+main{padding:16px 16px 24px;max-width:640px;margin:0 auto}
+.view{display:none}
+.view.on{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.card h2{font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.card .hint{font-size:13px;color:var(--sub);margin:0 0 12px;line-height:1.55}
+.badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;letter-spacing:.2px}
+.b-am{background:var(--goldsoft);color:var(--gold)}
+.b-pm{background:var(--bluesoft);color:var(--blue)}
+.b-yt{background:var(--greensoft);color:var(--green)}
+.b-gray{background:transparent;color:var(--sub);font-weight:600}
+textarea,input[type=text]{
+  width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);
+  border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;
+  resize:none;outline:none;display:block;
+}
+textarea:focus,input[type=text]:focus{border-color:var(--gold)}
+label.f{display:block;font-size:13.5px;font-weight:700;margin:14px 0 6px}
+label.f small{display:block;font-weight:400;color:var(--sub);font-size:12.5px;margin-top:2px}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.btn{
+  display:block;width:100%;min-height:48px;border-radius:12px;font-size:15.5px;font-weight:700;
+  background:var(--gold);color:#fff;margin-top:12px;
+}
+.btn:active{opacity:.75}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--sub);font-weight:600}
+.btn.blue{background:var(--blue)}
+.btn.green{background:var(--green)}
+.btn.sm{min-height:44px;font-size:14px}
+.row2{display:flex;gap:9px}
+.row2>*{flex:1;margin-top:12px}
+.saved{
+  background:var(--goldsoft);border-radius:12px;padding:13px 14px;font-size:16px;
+  border-left:4px solid var(--gold);word-break:break-word;white-space:pre-wrap;
+}
+.saved.pm{background:var(--bluesoft);border-left-color:var(--blue)}
+.saved.none{color:var(--sub);font-style:italic}
+.meta{font-size:12.5px;color:var(--sub);margin-top:8px;display:flex;gap:14px;align-items:center}
+.link{color:var(--gold);font-weight:700;font-size:13px;text-decoration:underline;padding:8px 0;min-height:32px}
+.link.del{color:var(--red)}
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:var(--card);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+nav button{
+  flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;font-size:11px;font-weight:700;color:var(--sub);position:relative;
+}
+nav button .ic{font-size:20px;line-height:1}
+nav button.on{color:var(--gold)}
+nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;height:8px;border-radius:50%;background:var(--red)}
+.banner{
+  background:var(--gold);color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;
+  font-size:14.5px;font-weight:600;line-height:1.5;
+}
+.banner b{font-size:16px;display:block;margin-bottom:3px}
+.banner .btn{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);color:#fff;margin-top:11px}
+.wk{background:var(--bg);border:1px dashed var(--line);border-radius:12px;padding:12px 13px}
+.wk h3{font-size:12.5px;margin:0 0 8px;color:var(--sub);letter-spacing:.3px;font-weight:700}
+.wkline{font-size:14.5px;padding:7px 0;border-bottom:1px solid var(--line);display:flex;gap:9px}
+.wkline:last-child{border-bottom:none}
+.wkline .d{color:var(--sub);font-size:12px;min-width:48px;padding-top:3px;font-variant-numeric:tabular-nums}
+.wkline .t{flex:1;word-break:break-word}
+.wkline em{color:var(--sub);font-style:normal;font-size:13.5px}
+.empty{color:var(--sub);font-size:14px;text-align:center;padding:26px 10px;line-height:1.6;margin:0}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:11px;box-shadow:var(--shadow)}
+.item .dt{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.qa{margin-bottom:9px}
+.qa .q{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:2px}
+.qa .a{font-size:15px;word-break:break-word;white-space:pre-wrap}
+.qa.star{background:var(--greensoft);border-radius:10px;padding:9px 11px}
+.qa.star .q{color:var(--green)}
+.chip{display:inline-block;background:var(--goldsoft);color:var(--gold);font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px}
+.seed{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)}
+.seed:last-child{border-bottom:none}
+.seed .s1{flex:1}
+.seed .s1 .nm{font-size:15px;word-break:break-word}
+.seed .s1 .ag{font-size:12px;color:var(--sub)}
+.toast{
+  position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);
+  background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:700;
+  opacity:0;pointer-events:none;transition:.22s;z-index:60;box-shadow:var(--shadow);max-width:88vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.divider{font-size:12px;color:var(--sub);text-align:center;margin:22px 0 12px;letter-spacing:1px;font-weight:700}
+.quote{font-size:13.5px;color:var(--sub);text-align:center;line-height:1.65;padding:8px 6px 2px;margin:0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <h1>카이로스 <span>·</span> <span id="hsub">오늘</span></h1>
+    <div class="today" id="hdate"></div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ 오늘 ============ -->
+<section class="view on" id="v-today">
+  <div id="sunBanner"></div>
+
+  <div class="card">
+    <h2><span class="badge b-am">아침 3분</span> 오늘의 카이로스 1개</h2>
+    <p class="hint">오늘 이것 하나만 하면 오늘은 성공이다.<br><b>딱 1개만.</b> 안 하면 6개월 뒤에 아쉬울 일로 고르세요.</p>
+    <div id="amBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="badge b-pm">밤 2분</span> 오늘의 한 줄</h2>
+    <p class="hint">나중에 돌아보면 의미 있을 것 같은 순간 한 줄.<br>없으면 <b>없음</b>을 눌러도 됩니다. 그것도 기록이에요.</p>
+    <div id="pmBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>🗂 미룬 일 <span class="badge b-gray">급한데 안 중요한 것</span></h2>
+    <p class="hint">"이건 급한 건가, 중요한 건가?" 급하기만 하면 즉답하지 말고 여기 적어두세요.</p>
+    <input type="text" id="parkIn" placeholder="예: OO한테 답장하기" enterkeyhint="done">
+    <button class="btn ghost sm" id="parkAdd">적어두고 미루기</button>
+    <div id="parkList"></div>
+  </div>
+
+  <p class="quote">"급한 일보다 중요한 일을 선택하세요."<br>— 민진 리, 예일대 축사</p>
+</section>
+
+<!-- ============ 회고 ============ -->
+<section class="view" id="v-review">
+  <div id="revIntro"></div>
+
+  <div class="card">
+    <h2>📖 지난 7일 기록</h2>
+    <div id="week7"></div>
+  </div>
+
+  <div class="card">
+    <h2>✍️ 4칸 회고</h2>
+    <p class="hint">②번이 핵심입니다. 내 카이로스가 반복해서 나오는 자리를 찾으면, 다음부터 그 자리에 더 있으면 됩니다.</p>
+
+    <label class="f">① 이번 주 진짜 의미 있었던 순간<small>위 기록에서 1~3개 고르기</small></label>
+    <textarea id="r1" rows="3"></textarea>
+
+    <label class="f">② 그때 나는 뭘 하고 있었나<small>장소 · 상황 · 같이 있던 사람</small></label>
+    <textarea id="r2" rows="3"></textarea>
+
+    <label class="f">③ 급한 일에 뺏긴 시간 중 제일 아까운 것<small>다음 주에 같은 게 오면 어떻게 할지 한 줄</small></label>
+    <textarea id="r3" rows="3"></textarea>
+
+    <label class="f">④ 다음 주의 중요한 것 3개<small>요일까지 정해서 달력에 넣기</small></label>
+    <input type="text" id="r4a" placeholder="1.">
+    <input type="text" id="r4b" placeholder="2." style="margin-top:8px">
+    <input type="text" id="r4c" placeholder="3." style="margin-top:8px">
+
+    <button class="btn" id="revSave">이번 주 회고 저장</button>
+    <button class="btn ghost sm" id="revCopy">회고 내용 복사하기</button>
+  </div>
+
+  <div class="divider">지난 회고</div>
+  <div id="revList"></div>
+</section>
+
+<!-- ============ 유튜브 소재 ============ -->
+<section class="view" id="v-yt">
+  <div class="card">
+    <h2><span class="badge b-yt">유튜브 소재</span> 오늘의 한 건</h2>
+    <p class="hint">호주에서 오늘 겪은 일 하나를 소재로 바꿉니다.<br>③번이 <b>쿠팡 상품이 나오는 자리</b>예요.</p>
+
+    <label class="f">① 오늘 뭐가 한국이랑 달랐나</label>
+    <textarea id="y1" rows="3" placeholder="예: 약국에 감기약이 없고 처방전이 있어야 했다"></textarea>
+
+    <label class="f">② 그때 내가 당황·화난 포인트</label>
+    <textarea id="y2" rows="3" placeholder="예: 밤에 애가 열나는데 살 수 있는 게 없었다"></textarea>
+
+    <label class="f">③ 이걸 미리 알았으면 뭘 준비했을까 <span class="chip">★ 상품</span></label>
+    <textarea id="y3" rows="3" placeholder="예: 한국에서 어린이 해열제·체온계를 챙겨올 걸"></textarea>
+
+    <label class="f">→ 떠오른 상품 / 영상 제목<small>비워둬도 됩니다</small></label>
+    <textarea id="y4" rows="2" placeholder="예: 호주 오기 전 약국에서 꼭 사와야 할 7가지"></textarea>
+
+    <button class="btn green" id="ytSave">소재 저장</button>
+  </div>
+
+  <div class="divider" id="ytCount">모은 소재</div>
+  <div id="ytList"></div>
+</section>
+
+<!-- ============ 기록 ============ -->
+<section class="view" id="v-log">
+  <div class="card">
+    <h2>🌱 씨앗 <span class="badge b-am" id="seedN"></span></h2>
+    <p class="hint">성과는 아직 없지만 계속하는 일. <b>최대 3개까지만.</b> 그 이상은 물 줄 시간이 없습니다.</p>
+    <div id="seedList"></div>
+    <input type="text" id="seedIn" placeholder="새 씨앗 (작고, 오늘 할 수 있는 일)" enterkeyhint="done">
+    <button class="btn ghost sm" id="seedAdd">씨앗 심기</button>
+  </div>
+
+  <div class="card">
+    <h2>📊 지금까지</h2>
+    <div id="stats"></div>
+  </div>
+
+  <div class="divider">전체 기록</div>
+  <div id="allLog"></div>
+
+  <button class="btn ghost sm" id="exportBtn" style="margin-top:16px">전체 기록 텍스트로 복사</button>
+  <p class="quote" style="margin-top:18px">"여기서 보낸 시간은 그 무엇 하나 헛되지 않을 것입니다."</p>
+</section>
+
+</main>
+
+<nav>
+  <button class="on" data-v="today"><span class="ic">☀️</span>오늘</button>
+  <button data-v="review"><span class="ic">📖</span>회고<span class="dot" id="revDot" style="display:none"></span></button>
+  <button data-v="yt"><span class="ic">🎬</span>유튜브</button>
+  <button data-v="log"><span class="ic">🌱</span>기록</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var KEY = "kairos_v1";
+var DAYS = ["일","월","화","수","목","금","토"];
+var D = { days:{}, reviews:[], yt:[], seeds:[], lastAuto:"" };
+
+/* ---------- 저장 / 불러오기 ---------- */
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      var p = JSON.parse(raw);
+      D.days     = p.days || {};
+      D.reviews  = p.reviews || [];
+      D.yt       = p.yt || [];
+      D.seeds    = p.seeds || [];
+      D.lastAuto = p.lastAuto || "";
+    }
+  }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(D)); }
+  catch(e){ toast("저장 공간이 부족해요"); }
+}
+
+/* ---------- 날짜 ---------- */
+function ymd(d){
+  var y=d.getFullYear(), m=d.getMonth()+1, a=d.getDate();
+  return y+"-"+(m<10?"0":"")+m+"-"+(a<10?"0":"")+a;
+}
+function parseYmd(s){ var p=s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+function todayKey(){ return ymd(new Date()); }
+function fmt(s){ var d=parseYmd(s); return (d.getMonth()+1)+"/"+d.getDate()+" ("+DAYS[d.getDay()]+")"; }
+function fmtLong(d){ return (d.getMonth()+1)+"월 "+d.getDate()+"일 "+DAYS[d.getDay()]+"요일"; }
+/* 이번 주 = 가장 최근 일요일 */
+function weekKey(d){
+  var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - x.getDay());
+  return ymd(x);
+}
+function monthsAgo(s){
+  var d=parseYmd(s), n=new Date();
+  return Math.max(0, (n.getFullYear()-d.getFullYear())*12 + (n.getMonth()-d.getMonth()));
+}
+function day(k){
+  if(!D.days[k]) D.days[k] = { morning:"", done:false, night:"", parked:[] };
+  if(!D.days[k].parked) D.days[k].parked = [];
+  return D.days[k];
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function reviewOf(wk){
+  for(var i=0;i<D.reviews.length;i++) if(D.reviews[i].week===wk) return D.reviews[i];
+  return null;
+}
+
+/* ---------- 토스트 ---------- */
+var tt;
+function toast(m){
+  var e=document.getElementById("toast");
+  e.textContent=m; e.classList.add("on");
+  clearTimeout(tt);
+  tt=setTimeout(function(){ e.classList.remove("on"); },1800);
+}
+
+/* ---------- 탭 이동 ---------- */
+var TITLES={today:"오늘",review:"회고",yt:"유튜브 소재",log:"기록"};
+function go(v){
+  var i, btns=document.querySelectorAll("nav button"), views=document.querySelectorAll(".view");
+  for(i=0;i<views.length;i++) views[i].classList.remove("on");
+  document.getElementById("v-"+v).classList.add("on");
+  for(i=0;i<btns.length;i++) btns[i].classList.toggle("on", btns[i].getAttribute("data-v")===v);
+  document.getElementById("hsub").textContent=TITLES[v];
+  window.scrollTo(0,0);
+  if(v==="review") renderReview();
+  if(v==="log") renderLog();
+}
+
+/* ---------- 오늘 ---------- */
+function renderToday(){
+  var k=todayKey(), d=day(k), h, i;
+
+  if(d.morning){
+    h = '<div class="saved">'+esc(d.morning)+'</div>'
+      + '<div class="meta"><button class="link" id="amDone">'+(d.done?"✅ 완료함":"○ 완료로 표시")+'</button>'
+      + '<button class="link del" id="amEdit">고치기</button></div>';
+  }else{
+    h = '<textarea id="amIn" rows="2" placeholder="오늘 이것 하나만 하면 성공이다"></textarea>'
+      + '<button class="btn" id="amSave">오늘의 1개 정하기</button>';
+  }
+  document.getElementById("amBox").innerHTML=h;
+
+  if(d.night){
+    h = '<div class="saved pm'+(d.night==="없음"?" none":"")+'">'+esc(d.night)+'</div>'
+      + '<div class="meta"><button class="link del" id="pmEdit">고치기</button></div>';
+  }else{
+    h = '<textarea id="pmIn" rows="2" placeholder="오늘 의미 있었던 순간 한 줄"></textarea>'
+      + '<div class="row2"><button class="btn blue" id="pmSave">기록하기</button>'
+      + '<button class="btn ghost" id="pmNone">없음</button></div>';
+  }
+  document.getElementById("pmBox").innerHTML=h;
+
+  var p=d.parked;
+  h="";
+  if(p.length){
+    h='<div style="margin-top:12px">';
+    for(i=0;i<p.length;i++){
+      h+='<div class="seed"><div class="s1"><div class="nm">'+esc(p[i])+'</div></div>'
+       + '<button class="link del" data-park="'+i+'">지움</button></div>';
+    }
+    h+='</div>';
+  }
+  document.getElementById("parkList").innerHTML=h;
+
+  /* 일요일 배너 */
+  var now=new Date(), wk=weekKey(now), pending=(now.getDay()===0 && !reviewOf(wk));
+  var sb=document.getElementById("sunBanner");
+  if(pending){
+    sb.innerHTML='<div class="banner"><b>📖 일요일이에요. 회고할 시간입니다</b>'
+      +'15분이면 됩니다. 지난 7일 기록은 이미 정리해뒀어요.'
+      +'<button class="btn" id="goRev">회고하러 가기</button></div>';
+    document.getElementById("goRev").onclick=function(){ go("review"); };
+  }else sb.innerHTML="";
+  document.getElementById("revDot").style.display = pending ? "block" : "none";
+
+  bindToday();
+}
+function bindToday(){
+  var k=todayKey(), d=day(k), el, i;
+  el=document.getElementById("amSave");
+  if(el) el.onclick=function(){
+    var v=document.getElementById("amIn").value.trim();
+    if(!v){ toast("한 줄만 적어주세요"); return; }
+    d.morning=v; d.done=false; save(); renderToday(); toast("오늘의 1개를 정했어요");
+  };
+  el=document.getElementById("amDone");
+  if(el) el.onclick=function(){ d.done=!d.done; save(); renderToday(); if(d.done) toast("잘하셨어요 👏"); };
+  el=document.getElementById("amEdit");
+  if(el) el.onclick=function(){ d.morning=""; d.done=false; save(); renderToday(); };
+
+  el=document.getElementById("pmSave");
+  if(el) el.onclick=function(){
+    var v=document.getElementById("pmIn").value.trim();
+    if(!v){ toast("한 줄만 적어주세요"); return; }
+    d.night=v; save(); renderToday(); toast("기록했어요");
+  };
+  el=document.getElementById("pmNone");
+  if(el) el.onclick=function(){ d.night="없음"; save(); renderToday(); toast("기록했어요"); };
+  el=document.getElementById("pmEdit");
+  if(el) el.onclick=function(){ d.night=""; save(); renderToday(); };
+
+  var ps=document.querySelectorAll("[data-park]");
+  for(i=0;i<ps.length;i++) ps[i].onclick=function(){
+    d.parked.splice(+this.getAttribute("data-park"),1); save(); renderToday();
+  };
+}
+document.getElementById("parkAdd").onclick=function(){
+  var inp=document.getElementById("parkIn"), v=inp.value.trim();
+  if(!v){ toast("내용을 적어주세요"); return; }
+  var d=day(todayKey());
+  d.parked.push(v); inp.value=""; inp.blur(); save(); renderToday();
+  toast("미뤘어요. 지금 안 해도 됩니다");
+};
+document.getElementById("parkIn").addEventListener("keydown",function(e){
+  if(e.key==="Enter"){ e.preventDefault(); document.getElementById("parkAdd").click(); }
+});
+
+/* ---------- 회고 ---------- */
+function last7(){
+  var out=[], n=new Date(), i;
+  for(i=6;i>=0;i--){
+    var d=new Date(n.getFullYear(), n.getMonth(), n.getDate()-i), k=ymd(d);
+    if(D.days[k]) out.push({ k:k, v:D.days[k] });
+  }
+  return out;
+}
+function weekLines(rows){
+  var h="", cnt=0, i;
+  for(i=0;i<rows.length;i++){
+    var v=rows[i].v, txt="";
+    if(v.morning) txt+='<div>☀️ '+esc(v.morning)+(v.done?' <span class="chip">완료</span>':'')+'</div>';
+    if(v.night)   txt+='<div>'+(v.night==="없음"?'<em>🌙 없음</em>':'🌙 '+esc(v.night))+'</div>';
+    if(!txt) continue;
+    cnt++;
+    h+='<div class="wkline"><div class="d">'+fmt(rows[i].k)+'</div><div class="t">'+txt+'</div></div>';
+  }
+  return { html:h, count:cnt };
+}
+function renderReview(){
+  var wk=weekKey(new Date()), cur=reviewOf(wk), i;
+
+  var iv=document.getElementById("revIntro");
+  if(cur) iv.innerHTML='<div class="banner" style="background:var(--green)"><b>✅ 이번 주 회고 완료</b>아래에서 언제든 고칠 수 있어요.</div>';
+  else if(new Date().getDay()===0) iv.innerHTML='<div class="banner"><b>📖 오늘은 일요일</b>15분만 쓰면 됩니다.</div>';
+  else iv.innerHTML='';
+
+  var w=weekLines(last7());
+  document.getElementById("week7").innerHTML = w.count
+    ? '<div class="wk"><h3>지난 7일 · '+w.count+'일 기록됨</h3>'+w.html+'</div>'
+    : '<p class="empty">아직 이번 주 기록이 없어요.<br>오늘 탭에서 한 줄부터 시작해보세요.</p>';
+
+  document.getElementById("r1").value  = cur ? cur.r1 : "";
+  document.getElementById("r2").value  = cur ? cur.r2 : "";
+  document.getElementById("r3").value  = cur ? cur.r3 : "";
+  document.getElementById("r4a").value = cur ? (cur.next[0]||"") : "";
+  document.getElementById("r4b").value = cur ? (cur.next[1]||"") : "";
+  document.getElementById("r4c").value = cur ? (cur.next[2]||"") : "";
+  document.getElementById("revSave").textContent = cur ? "회고 수정 저장" : "이번 주 회고 저장";
+
+  var sorted=D.reviews.slice().sort(function(a,b){ return a.week<b.week?1:-1; }), list="";
+  for(i=0;i<sorted.length;i++){
+    var r=sorted[i];
+    if(r.week===wk) continue;
+    list+='<div class="item"><div class="dt"><span>'+fmt(r.week)+' 주간</span>'
+        + '<button class="link del" data-drev="'+r.week+'">삭제</button></div>';
+    if(r.r1) list+='<div class="qa"><div class="q">① 의미 있었던 순간</div><div class="a">'+esc(r.r1)+'</div></div>';
+    if(r.r2) list+='<div class="qa"><div class="q">② 그때 나는</div><div class="a">'+esc(r.r2)+'</div></div>';
+    if(r.r3) list+='<div class="qa"><div class="q">③ 아까웠던 시간</div><div class="a">'+esc(r.r3)+'</div></div>';
+    var nx=r.next.filter(function(x){ return x; });
+    if(nx.length) list+='<div class="qa"><div class="q">④ 다음 주 중요한 것</div><div class="a">'+esc(nx.join("\n"))+'</div></div>';
+    list+='</div>';
+  }
+  document.getElementById("revList").innerHTML = list || '<p class="empty">지난 회고가 쌓이면 여기 보입니다.</p>';
+
+  var ds=document.querySelectorAll("[data-drev]");
+  for(i=0;i<ds.length;i++) ds[i].onclick=function(){
+    var w2=this.getAttribute("data-drev");
+    D.reviews=D.reviews.filter(function(x){ return x.week!==w2; });
+    save(); renderReview(); renderToday(); toast("삭제했어요");
+  };
+}
+document.getElementById("revSave").onclick=function(){
+  var wk=weekKey(new Date());
+  var o={
+    week:wk, savedAt:Date.now(),
+    r1:document.getElementById("r1").value.trim(),
+    r2:document.getElementById("r2").value.trim(),
+    r3:document.getElementById("r3").value.trim(),
+    next:[document.getElementById("r4a").value.trim(),
+          document.getElementById("r4b").value.trim(),
+          document.getElementById("r4c").value.trim()]
+  };
+  if(!o.r1 && !o.r2 && !o.r3 && !o.next.join("")){ toast("한 칸이라도 채워주세요"); return; }
+  D.reviews=D.reviews.filter(function(x){ return x.week!==wk; });
+  D.reviews.push(o); save(); renderReview(); renderToday(); toast("이번 주 회고를 저장했어요 ✅");
+};
+document.getElementById("revCopy").onclick=function(){
+  var wk=weekKey(new Date()), rows=last7(), t="[카이로스 주간 회고] "+fmt(wk)+" 주\n\n■ 지난 7일 기록\n", i;
+  for(i=0;i<rows.length;i++){
+    var v=rows[i].v;
+    if(v.morning) t+=fmt(rows[i].k)+" ☀️ "+v.morning+(v.done?" (완료)":"")+"\n";
+    if(v.night)   t+=fmt(rows[i].k)+" 🌙 "+v.night+"\n";
+  }
+  t+="\n■ 4칸 회고\n"
+   + "① "+document.getElementById("r1").value+"\n"
+   + "② "+document.getElementById("r2").value+"\n"
+   + "③ "+document.getElementById("r3").value+"\n"
+   + "④ "+[document.getElementById("r4a").value,
+            document.getElementById("r4b").value,
+            document.getElementById("r4c").value].filter(Boolean).join(" / ");
+  copy(t);
+};
+
+/* ---------- 유튜브 소재 ---------- */
+document.getElementById("ytSave").onclick=function(){
+  var o={
+    id:Date.now(), date:todayKey(),
+    q1:document.getElementById("y1").value.trim(),
+    q2:document.getElementById("y2").value.trim(),
+    q3:document.getElementById("y3").value.trim(),
+    q4:document.getElementById("y4").value.trim()
+  };
+  if(!o.q1 && !o.q2 && !o.q3){ toast("①~③ 중 하나는 채워주세요"); return; }
+  D.yt.unshift(o); save();
+  document.getElementById("y1").value="";
+  document.getElementById("y2").value="";
+  document.getElementById("y3").value="";
+  document.getElementById("y4").value="";
+  renderYt(); toast("소재 "+D.yt.length+"개째 저장 🎬"); window.scrollTo(0,0);
+};
+function renderYt(){
+  document.getElementById("ytCount").textContent="모은 소재 "+D.yt.length+"개";
+  var h="", i;
+  for(i=0;i<D.yt.length;i++){
+    var y=D.yt[i];
+    h+='<div class="item"><div class="dt"><span>'+fmt(y.date)+'</span>'
+     + '<button class="link del" data-dyt="'+y.id+'">삭제</button></div>';
+    if(y.q1) h+='<div class="qa"><div class="q">① 한국이랑 달랐던 점</div><div class="a">'+esc(y.q1)+'</div></div>';
+    if(y.q2) h+='<div class="qa"><div class="q">② 당황·화난 포인트</div><div class="a">'+esc(y.q2)+'</div></div>';
+    if(y.q3) h+='<div class="qa star"><div class="q">③ ★ 미리 알았으면 준비했을 것</div><div class="a">'+esc(y.q3)+'</div></div>';
+    if(y.q4) h+='<div class="qa" style="margin-top:9px"><div class="q">→ 상품 / 영상 제목</div><div class="a">'+esc(y.q4)+'</div></div>';
+    h+='<button class="link" data-cyt="'+y.id+'">이 소재 복사</button></div>';
+  }
+  document.getElementById("ytList").innerHTML = h || '<p class="empty">아직 소재가 없어요.<br>오늘 겪은 일 하나만 적어보세요.</p>';
+
+  var ds=document.querySelectorAll("[data-dyt]");
+  for(i=0;i<ds.length;i++) ds[i].onclick=function(){
+    var id=+this.getAttribute("data-dyt");
+    D.yt=D.yt.filter(function(x){ return x.id!==id; });
+    save(); renderYt(); toast("삭제했어요");
+  };
+  var cs=document.querySelectorAll("[data-cyt]");
+  for(i=0;i<cs.length;i++) cs[i].onclick=function(){
+    var id=+this.getAttribute("data-cyt"), y=null, j;
+    for(j=0;j<D.yt.length;j++) if(D.yt[j].id===id) y=D.yt[j];
+    if(!y) return;
+    copy("[유튜브 소재] "+fmt(y.date)
+      +"\n① 한국이랑 달랐던 점: "+y.q1
+      +"\n② 당황·화난 포인트: "+y.q2
+      +"\n③ 미리 알았으면 준비했을 것(★상품): "+y.q3
+      +(y.q4?"\n→ 상품/영상 제목: "+y.q4:""));
+  };
+}
+
+/* ---------- 기록 / 씨앗 ---------- */
+document.getElementById("seedAdd").onclick=function(){
+  var inp=document.getElementById("seedIn"), v=inp.value.trim();
+  if(!v){ toast("씨앗 이름을 적어주세요"); return; }
+  if(D.seeds.length>=3){ toast("씨앗은 3개까지예요. 하나 빼주세요"); return; }
+  D.seeds.push({ id:Date.now(), t:v, from:todayKey() });
+  inp.value=""; inp.blur(); save(); renderLog(); toast("씨앗을 심었어요 🌱");
+};
+document.getElementById("seedIn").addEventListener("keydown",function(e){
+  if(e.key==="Enter"){ e.preventDefault(); document.getElementById("seedAdd").click(); }
+});
+
+function renderLog(){
+  var i, h="";
+  document.getElementById("seedN").textContent=D.seeds.length+" / 3";
+  for(i=0;i<D.seeds.length;i++){
+    var s=D.seeds[i], m=monthsAgo(s.from);
+    h+='<div class="seed"><div class="s1"><div class="nm">🌱 '+esc(s.t)+'</div>'
+     + '<div class="ag">'+(m===0?"이번 달 시작":m+"개월째")+' · '+fmt(s.from)+' 부터</div></div>'
+     + '<button class="link del" data-dseed="'+s.id+'">뽑기</button></div>';
+  }
+  document.getElementById("seedList").innerHTML = h || '<p class="empty" style="padding:14px">아직 심은 씨앗이 없어요.</p>';
+  var ss=document.querySelectorAll("[data-dseed]");
+  for(i=0;i<ss.length;i++) ss[i].onclick=function(){
+    var id=+this.getAttribute("data-dseed");
+    D.seeds=D.seeds.filter(function(x){ return x.id!==id; });
+    save(); renderLog();
+  };
+
+  /* 통계 */
+  var keys=Object.keys(D.days).sort(), am=0, pm=0, none=0, streak=0;
+  for(i=0;i<keys.length;i++){
+    var v=D.days[keys[i]];
+    if(v.morning) am++;
+    if(v.night){ pm++; if(v.night==="없음") none++; }
+  }
+  var n=new Date();
+  for(i=0;i<400;i++){
+    var dd=new Date(n.getFullYear(), n.getMonth(), n.getDate()-i), vv=D.days[ymd(dd)];
+    if(vv && (vv.morning||vv.night)) streak++;
+    else if(i>0) break;
+  }
+  document.getElementById("stats").innerHTML=
+     '<div class="wkline"><div class="d">☀️</div><div class="t">아침 기록 <b>'+am+'</b>일</div></div>'
+    +'<div class="wkline"><div class="d">🌙</div><div class="t">밤 기록 <b>'+pm+'</b>일 <em>(그중 "없음" '+none+'일)</em></div></div>'
+    +'<div class="wkline"><div class="d">🔥</div><div class="t">연속 기록 <b>'+streak+'</b>일</div></div>'
+    +'<div class="wkline"><div class="d">📖</div><div class="t">주간 회고 <b>'+D.reviews.length+'</b>번</div></div>'
+    +'<div class="wkline"><div class="d">🎬</div><div class="t">유튜브 소재 <b>'+D.yt.length+'</b>개</div></div>';
+
+  /* 전체 기록 (최근 90일) */
+  var rev=keys.slice().reverse(), l="", shown=0;
+  for(i=0;i<rev.length && shown<90;i++){
+    var k=rev[i], v2=D.days[k], t="";
+    if(v2.morning) t+='<div>☀️ '+esc(v2.morning)+(v2.done?' <span class="chip">완료</span>':'')+'</div>';
+    if(v2.night)   t+='<div>'+(v2.night==="없음"?'<em>🌙 없음</em>':'🌙 '+esc(v2.night))+'</div>';
+    if(!t) continue;
+    shown++;
+    l+='<div class="wkline"><div class="d">'+fmt(k)+'</div><div class="t">'+t+'</div></div>';
+  }
+  document.getElementById("allLog").innerHTML = l ? '<div class="card">'+l+'</div>' : '<p class="empty">기록이 쌓이면 여기 보입니다.</p>';
+}
+document.getElementById("exportBtn").onclick=function(){
+  var keys=Object.keys(D.days).sort(), i, t="[카이로스 전체 기록] "+todayKey()+"\n\n■ 일일 기록\n";
+  for(i=0;i<keys.length;i++){
+    var v=D.days[keys[i]];
+    if(v.morning) t+=fmt(keys[i])+" ☀️ "+v.morning+(v.done?" (완료)":"")+"\n";
+    if(v.night)   t+=fmt(keys[i])+" 🌙 "+v.night+"\n";
+  }
+  t+="\n■ 주간 회고 "+D.reviews.length+"건\n";
+  var sr=D.reviews.slice().sort(function(a,b){ return a.week<b.week?1:-1; });
+  for(i=0;i<sr.length;i++){
+    t+="- "+fmt(sr[i].week)+" 주 | ① "+sr[i].r1+" | ② "+sr[i].r2+" | ③ "+sr[i].r3
+     + " | ④ "+sr[i].next.filter(Boolean).join(" / ")+"\n";
+  }
+  t+="\n■ 유튜브 소재 "+D.yt.length+"건\n";
+  for(i=0;i<D.yt.length;i++){
+    t+="- "+fmt(D.yt[i].date)+" | ① "+D.yt[i].q1+" | ② "+D.yt[i].q2+" | ③ "+D.yt[i].q3
+     + (D.yt[i].q4?" | → "+D.yt[i].q4:"")+"\n";
+  }
+  t+="\n■ 씨앗\n";
+  for(i=0;i<D.seeds.length;i++) t+="- "+D.seeds[i].t+" ("+monthsAgo(D.seeds[i].from)+"개월째)\n";
+  copy(t);
+};
+
+/* ---------- 복사 (iOS 사파리 대응) ---------- */
+function copy(t){
+  var ok=function(){ toast("복사했어요 📋"); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(ok, function(){ fallback(t, ok); });
+  }else fallback(t, ok);
+}
+function fallback(t, ok){
+  var ta=document.createElement("textarea");
+  ta.value=t;
+  ta.style.position="fixed"; ta.style.top="0"; ta.style.opacity="0";
+  ta.contentEditable="true"; ta.readOnly=false;
+  document.body.appendChild(ta);
+  var r=document.createRange();
+  r.selectNodeContents(ta);
+  var s=window.getSelection();
+  s.removeAllRanges(); s.addRange(r);
+  ta.setSelectionRange(0, 999999);
+  try{ document.execCommand("copy"); ok(); }
+  catch(e){ toast("복사가 안 되면 길게 눌러 선택하세요"); }
+  document.body.removeChild(ta);
+}
+
+/* ---------- 시작 ---------- */
+var navBtns=document.querySelectorAll("nav button");
+for(var q=0;q<navBtns.length;q++) navBtns[q].onclick=function(){ go(this.getAttribute("data-v")); };
+
+var bootDay="";
+function boot(){
+  load();
+  bootDay=todayKey();
+  document.getElementById("hdate").textContent=fmtLong(new Date());
+  renderToday(); renderYt();
+  /* 일요일이면 하루 한 번 자동으로 회고 화면을 연다 */
+  var now=new Date(), wk=weekKey(now);
+  if(now.getDay()===0 && !reviewOf(wk) && D.lastAuto!==bootDay){
+    D.lastAuto=bootDay; save(); go("review");
+  }
+}
+boot();
+
+/* 앱을 다시 열었을 때 날짜가 바뀌었으면 새로 그린다 */
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState==="visible" && todayKey()!==bootDay) boot();
+});
+</script>
+</body>
+</html>
