@@ -132,6 +132,16 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
 }
 .toast.on{opacity:1;transform:translateX(-50%)}
 .divider{font-size:12px;color:var(--sub);text-align:center;margin:22px 0 12px;letter-spacing:1px;font-weight:700}
+.opts{display:flex;gap:5px;margin-top:6px}
+.opt{flex:1;min-height:44px;border:1.5px solid var(--line);border-radius:10px;font-size:11.5px;font-weight:700;color:var(--sub);line-height:1.25;padding:4px 2px}
+.opt.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.gq{padding:12px 0;border-bottom:1px solid var(--line)}
+.gq:last-of-type{border-bottom:none}
+.gq .qt{font-size:14.5px;word-break:break-word}
+.gbig{font-size:34px;font-weight:800;color:var(--gold);line-height:1.1;font-variant-numeric:tabular-nums}
+.gbar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:4px 0 10px}
+.gbar i{display:block;height:100%;background:var(--gold);border-radius:99px}
+.gbar.b i{background:var(--blue)}
 .quote{font-size:13.5px;color:var(--sub);text-align:center;line-height:1.65;padding:8px 6px 2px;margin:0}
 </style>
 </head>
@@ -151,6 +161,11 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
   <div id="sunBanner"></div>
 
   <div class="card">
+    <h2>🔥 오늘의 방향 <span class="badge b-gray">그릿</span></h2>
+    <div id="gritToday"></div>
+  </div>
+
+  <div class="card">
     <h2><span class="badge b-am">아침 3분</span> 오늘의 카이로스 1개</h2>
     <p class="hint">오늘 이것 하나만 하면 오늘은 성공이다.<br><b>딱 1개만.</b> 안 하면 6개월 뒤에 아쉬울 일로 고르세요.</p>
     <div id="amBox"></div>
@@ -163,7 +178,7 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
   </div>
 
   <div class="card">
-    <h2>🗂 미룬 일 <span class="badge b-gray">급한데 안 중요한 것</span></h2>
+    <h2>🗂 미룬 일 <span class="badge b-gray">급한데 안 중요한 것</span> <span class="badge b-am" id="parkBadge" style="display:none"></span></h2>
     <p class="hint">"이건 급한 건가, 중요한 건가?" 급하기만 하면 즉답하지 말고 여기 적어두세요.</p>
     <input type="text" id="parkIn" placeholder="예: OO한테 답장하기" enterkeyhint="done">
     <button class="btn ghost sm" id="parkAdd">적어두고 미루기</button>
@@ -243,6 +258,11 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
     <button class="btn ghost sm" id="seedAdd">씨앗 심기</button>
   </div>
 
+  <div class="card" id="gritCard">
+    <h2>🧭 나의 그릿 <span class="badge b-am" id="gritBadge"></span></h2>
+    <div id="gritBox"></div>
+  </div>
+
   <div class="card">
     <h2>📊 지금까지</h2>
     <div id="stats"></div>
@@ -270,7 +290,60 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
 "use strict";
 var KEY = "kairos_v1";
 var DAYS = ["일","월","화","수","목","금","토"];
-var D = { days:{}, reviews:[], yt:[], seeds:[], lastAuto:"" };
+var D = { days:{}, reviews:[], yt:[], seeds:[], grit:[], lastAuto:"" };
+
+/* ---------- 그릿 (앤절라 더크워스 그릿 척도) ----------
+   홀수 문항 = 열정(뒤집어 채점), 짝수 문항 = 끈기. 총점÷10 = 그릿 점수 */
+var GQ = [
+  "나는 새로운 아이디어와 프로젝트 때문에 기존의 것에 소홀해진 적이 있다.",
+  "나는 실패해도 실망하지 않는다. 나는 쉽게 포기하지 않는다.",
+  "나는 한 가지 목표를 세워놓고 다른 목표를 추구한 적이 종종 있다.",
+  "나는 노력가다.",
+  "나는 몇 개월 이상 걸리는 일에 계속 집중하기 힘들다.",
+  "나는 뭐든 시작한 일은 반드시 끝낸다.",
+  "나의 관심사는 해마다 바뀐다.",
+  "나는 성실하다. 나는 결코 포기하지 않는다.",
+  "나는 어떤 아이디어나 프로젝트에 잠시 사로잡혔다가 얼마 후에 관심을 잃은 적이 있다.",
+  "나는 좌절을 딛고 중요한 도전에 성공한 적이 있다."
+];
+var GOPT = ["전혀<br>아니다","아니다","그런<br>편","그렇다","매우<br>그렇다"];
+/* 문항마다 '오늘 하루 이렇게 살기' 한 줄 */
+var GDIR = [
+  "새 아이디어가 떠오르면 '미룬 일'에 적어만 두고, 하던 일부터 끝까지.",
+  "오늘 뭔가 잘 안 되면 실망 대신 '딱 한 번만 더' 해보기.",
+  "오늘의 1개를 이번 달 목표와 이어지는 일로 고르기. 목표를 갈아타지 않기.",
+  "잘했냐보다 '오늘도 했냐'에 점수 주기. 노력한 시간 자체가 성과.",
+  "씨앗 하나에 오늘 10분만 물 주기. 몇 달짜리 일은 매일 조금씩.",
+  "새로 벌이지 말고, 벌여둔 것 하나를 오늘 마무리하기.",
+  "새로운 관심거리 대신, 전부터 하던 일 하나를 오늘 이어가기.",
+  "하기 싫어도 정한 시간에 일단 자리에 앉기. 시작만 하면 된다.",
+  "오늘 끌리는 새 것은 바로 시작하지 말고 1주일 묵혀보기.",
+  "요즘 막힌 일 하나를 아주 작게 쪼개서 첫 걸음만 떼기."
+];
+var GPCT = [[4.9,99],[4.7,95],[4.5,90],[4.3,80],[4.1,70],[3.9,60],[3.8,50],[3.5,40],[3.3,30],[3.0,20],[2.5,10]];
+function gritScore(ans){ /* ans[i] = 0(전혀)~4(매우) */
+  var pas=0, per=0, i;
+  for(i=0;i<10;i++){
+    if(i%2===0) pas += 5-ans[i]; else per += ans[i]+1;
+  }
+  return { total:Math.round((pas+per)/10*10)/10, pas:Math.round(pas/5*10)/10, per:Math.round(per/5*10)/10 };
+}
+function gritPct(s){
+  for(var i=0;i<GPCT.length;i++) if(s>=GPCT[i][0]) return GPCT[i][1];
+  return 0;
+}
+function lastGrit(){ return D.grit.length ? D.grit[D.grit.length-1] : null; }
+function dayNum(k){ var d=parseYmd(k); return Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5); }
+/* 오늘의 방향: 검사했으면 약한 쪽 문항에서, 아니면 10개를 돌아가며 */
+function gritDirIdx(k){
+  var g=lastGrit(), n=dayNum(k), pool=[0,1,2,3,4,5,6,7,8,9];
+  if(g){
+    if(g.pas<g.per) pool=[0,2,4,6,8];
+    else if(g.per<g.pas) pool=[1,3,5,7,9];
+  }
+  return pool[n % pool.length];
+}
+var gAns=[], gEditing=false;
 
 /* ---------- 저장 / 불러오기 ---------- */
 function load(){
@@ -282,6 +355,8 @@ function load(){
       D.reviews  = p.reviews || [];
       D.yt       = p.yt || [];
       D.seeds    = p.seeds || [];
+      D.grit     = p.grit || [];
+      for(var pk in D.days) normPark(D.days[pk]);
       D.lastAuto = p.lastAuto || "";
     }
   }catch(e){}
@@ -313,7 +388,14 @@ function monthsAgo(s){
 function day(k){
   if(!D.days[k]) D.days[k] = { morning:"", done:false, night:"", parked:[] };
   if(!D.days[k].parked) D.days[k].parked = [];
+  normPark(D.days[k]);
   return D.days[k];
+}
+/* 예전엔 미룬 일을 글자로만 저장했음 → {t, done, doneOn} 로 바꿔 쓴다 */
+function normPark(v){
+  if(!v || !v.parked) return;
+  for(var i=0;i<v.parked.length;i++)
+    if(typeof v.parked[i]==="string") v.parked[i]={ t:v.parked[i], done:false, doneOn:"" };
 }
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function reviewOf(wk){
@@ -367,17 +449,55 @@ function renderToday(){
   }
   document.getElementById("pmBox").innerHTML=h;
 
-  var p=d.parked;
+  /* 오늘의 방향 (그릿) */
+  var g=lastGrit(), gi=gritDirIdx(k), gtxt=GDIR[gi];
+  h='<div class="saved">'+esc(gtxt)+'</div>';
+  if(g){
+    var weak = g.pas<g.per ? "열정(한 우물 파기)" : (g.per<g.pas ? "끈기(포기 안 하기)" : "");
+    h+='<p class="hint" style="margin:9px 0 0">내 그릿 <b>'+g.total.toFixed(1)+'</b> · 열정 '+g.pas.toFixed(1)+' / 끈기 '+g.per.toFixed(1)
+      +(weak?'<br>그래서 요즘은 <b>'+weak+'</b> 쪽을 키우는 방향이 나옵니다.':'')+'</p>';
+  }else{
+    h+='<p class="hint" style="margin:9px 0 0">그릿 검사(2분)를 하면 내 약한 쪽에 맞춰 방향이 나와요.</p>'
+      +'<button class="link" id="gGo">→ 그릿 검사하러 가기</button>';
+  }
+  h+='<div class="meta"><button class="link" id="gDone">'+(d.grit?"✅ 오늘 이렇게 살았다":"○ 밤에 체크: 오늘 이렇게 살았나?")+'</button></div>';
+  document.getElementById("gritToday").innerHTML=h;
+
+  /* 미룬 일: 날짜가 지나도 완료 안 한 건 계속 보인다 */
+  var open=[], doneToday=[], dk=Object.keys(D.days).sort(), j;
+  for(i=0;i<dk.length;i++){
+    var pk=D.days[dk[i]].parked||[];
+    for(j=0;j<pk.length;j++){
+      var it=pk[j], ref=dk[i]+"|"+j;
+      if(!it.done) open.push({ k:dk[i], ref:ref, it:it });
+      else if(it.doneOn===k) doneToday.push({ k:dk[i], ref:ref, it:it });
+    }
+  }
   h="";
-  if(p.length){
-    h='<div style="margin-top:12px">';
-    for(i=0;i<p.length;i++){
-      h+='<div class="seed"><div class="s1"><div class="nm">'+esc(p[i])+'</div></div>'
-       + '<button class="link del" data-park="'+i+'">지움</button></div>';
+  if(open.length){
+    h+='<div class="wk" style="margin-top:12px"><h3>📌 아직 안 한 미룬 일 '+open.length+'개</h3>';
+    for(i=0;i<open.length;i++){
+      var o=open[i], ago=dayNum(k)-dayNum(o.k);
+      h+='<div class="seed"><div class="s1"><div class="nm">'+esc(o.it.t)+'</div>'
+       + '<div class="ag">'+(ago===0?"오늘 미룸":fmt(o.k)+' 미룸 · <b style="color:var(--red)">'+ago+'일째</b>')+'</div></div>'
+       + '<button class="link" data-pdone="'+o.ref+'">완료</button>'
+       + '<button class="link del" data-pdel="'+o.ref+'">지움</button></div>';
+    }
+    h+='</div>';
+  }
+  if(doneToday.length){
+    h+='<div style="margin-top:10px">';
+    for(i=0;i<doneToday.length;i++){
+      var dn=doneToday[i];
+      h+='<div class="seed"><div class="s1"><div class="nm" style="text-decoration:line-through;color:var(--sub)">✅ '+esc(dn.it.t)+'</div></div>'
+       + '<button class="link del" data-pundo="'+dn.ref+'">되돌리기</button></div>';
     }
     h+='</div>';
   }
   document.getElementById("parkList").innerHTML=h;
+  var pb=document.getElementById("parkBadge");
+  pb.textContent = open.length ? "안 한 것 "+open.length : "";
+  pb.style.display = open.length ? "" : "none";
 
   /* 일요일 배너 */
   var now=new Date(), wk=weekKey(now), pending=(now.getDay()===0 && !reviewOf(wk));
@@ -416,16 +536,39 @@ function bindToday(){
   el=document.getElementById("pmEdit");
   if(el) el.onclick=function(){ d.night=""; save(); renderToday(); };
 
-  var ps=document.querySelectorAll("[data-park]");
+  el=document.getElementById("gDone");
+  if(el) el.onclick=function(){
+    d.grit=!d.grit; d.gritText = d.grit ? GDIR[gritDirIdx(k)] : "";
+    save(); renderToday(); if(d.grit) toast("한 우물, 오늘도 한 삽 🔥");
+  };
+  el=document.getElementById("gGo");
+  if(el) el.onclick=function(){
+    go("log");
+    setTimeout(function(){ document.getElementById("gritCard").scrollIntoView({behavior:"smooth"}); },60);
+  };
+
+  function pItem(ref){ var a=ref.split("|"); return { list:D.days[a[0]].parked, i:+a[1] }; }
+  var ps=document.querySelectorAll("[data-pdone]");
   for(i=0;i<ps.length;i++) ps[i].onclick=function(){
-    d.parked.splice(+this.getAttribute("data-park"),1); save(); renderToday();
+    var r=pItem(this.getAttribute("data-pdone")), it=r.list[r.i];
+    it.done=true; it.doneOn=todayKey(); save(); renderToday(); toast("미룬 일 하나 끝! 👏");
+  };
+  ps=document.querySelectorAll("[data-pundo]");
+  for(i=0;i<ps.length;i++) ps[i].onclick=function(){
+    var r=pItem(this.getAttribute("data-pundo")), it=r.list[r.i];
+    it.done=false; it.doneOn=""; save(); renderToday();
+  };
+  ps=document.querySelectorAll("[data-pdel]");
+  for(i=0;i<ps.length;i++) ps[i].onclick=function(){
+    var r=pItem(this.getAttribute("data-pdel"));
+    r.list.splice(r.i,1); save(); renderToday(); toast("지웠어요");
   };
 }
 document.getElementById("parkAdd").onclick=function(){
   var inp=document.getElementById("parkIn"), v=inp.value.trim();
   if(!v){ toast("내용을 적어주세요"); return; }
   var d=day(todayKey());
-  d.parked.push(v); inp.value=""; inp.blur(); save(); renderToday();
+  d.parked.push({ t:v, done:false, doneOn:"" }); inp.value=""; inp.blur(); save(); renderToday();
   toast("미뤘어요. 지금 안 해도 됩니다");
 };
 document.getElementById("parkIn").addEventListener("keydown",function(e){
@@ -447,6 +590,7 @@ function weekLines(rows){
     var v=rows[i].v, txt="";
     if(v.morning) txt+='<div>☀️ '+esc(v.morning)+(v.done?' <span class="chip">완료</span>':'')+'</div>';
     if(v.night)   txt+='<div>'+(v.night==="없음"?'<em>🌙 없음</em>':'🌙 '+esc(v.night))+'</div>';
+    if(v.grit)    txt+='<div>🔥 '+esc(v.gritText||"그릿 방향 실천")+' <span class="chip">실천</span></div>';
     if(!txt) continue;
     cnt++;
     h+='<div class="wkline"><div class="d">'+fmt(rows[i].k)+'</div><div class="t">'+txt+'</div></div>';
@@ -591,8 +735,65 @@ document.getElementById("seedIn").addEventListener("keydown",function(e){
   if(e.key==="Enter"){ e.preventDefault(); document.getElementById("seedAdd").click(); }
 });
 
+/* ---------- 그릿 검사 ---------- */
+function renderGrit(){
+  var g=lastGrit(), box=document.getElementById("gritBox"), h="", i, c;
+  document.getElementById("gritBadge").textContent = g ? g.total.toFixed(1)+"점" : "";
+  if(g && !gEditing){
+    var pct=gritPct(g.total);
+    h='<div class="gbig">'+g.total.toFixed(1)+' <span style="font-size:14px;color:var(--sub);font-weight:600">/ 5</span></div>'
+     +'<p class="hint" style="margin:4px 0 12px">'+(pct?'성인 중 약 <b>'+pct+'%</b>보다 그릿이 높아요':'성인 하위 10%쯤이에요. 오늘부터 올라갈 일만 남았어요')+' · '+fmt(g.date)+' 검사</p>'
+     +'<div style="font-size:13px;font-weight:700">열정 (한 우물 파기) '+g.pas.toFixed(1)+'</div>'
+     +'<div class="gbar"><i style="width:'+(g.pas/5*100)+'%"></i></div>'
+     +'<div style="font-size:13px;font-weight:700">끈기 (포기 안 하기) '+g.per.toFixed(1)+'</div>'
+     +'<div class="gbar b"><i style="width:'+(g.per/5*100)+'%"></i></div>'
+     +'<p class="hint" style="margin:6px 0 0">지금 이 점수는 "지금의 나"일 뿐이에요. 그릿은 자라요. 한두 달 뒤에 다시 해보세요.</p>';
+    if(D.grit.length>1){
+      h+='<div class="wk" style="margin-top:12px"><h3>지난 검사</h3>';
+      for(i=D.grit.length-2;i>=0;i--){
+        var x=D.grit[i];
+        h+='<div class="wkline"><div class="d">'+fmt(x.date)+'</div><div class="t">그릿 <b>'+x.total.toFixed(1)+'</b> <em>· 열정 '+x.pas.toFixed(1)+' / 끈기 '+x.per.toFixed(1)+'</em></div></div>';
+      }
+      h+='</div>';
+    }
+    h+='<button class="btn ghost sm" id="gRetry">다시 검사하기</button>';
+    box.innerHTML=h;
+    document.getElementById("gRetry").onclick=function(){ gEditing=true; gAns=[]; renderGrit(); };
+    return;
+  }
+  h='<p class="hint">10문항, 2분이면 끝나요. 남 눈치 말고 <b>지금의 나</b>로 답하세요.</p>';
+  for(i=0;i<10;i++){
+    h+='<div class="gq"><div class="qt">'+(i+1)+'. '+GQ[i]+'</div><div class="opts">';
+    for(c=0;c<5;c++) h+='<button class="opt'+(gAns[i]===c?" on":"")+'" data-gq="'+i+'" data-gc="'+c+'">'+GOPT[c]+'</button>';
+    h+='</div></div>';
+  }
+  var n=0; for(i=0;i<10;i++) if(gAns[i]!==undefined) n++;
+  h+='<button class="btn" id="gSave">'+(n<10?"답한 문항 "+n+" / 10":"내 그릿 점수 보기")+'</button>';
+  if(g) h+='<button class="btn ghost sm" id="gCancel">취소</button>';
+  box.innerHTML=h;
+  var os=box.querySelectorAll("[data-gq]");
+  for(i=0;i<os.length;i++) os[i].onclick=function(){
+    var q=+this.getAttribute("data-gq"), cc=+this.getAttribute("data-gc"), sib=box.querySelectorAll('[data-gq="'+q+'"]'), m, cnt=0;
+    gAns[q]=cc;
+    for(m=0;m<sib.length;m++) sib[m].classList.toggle("on", m===cc);
+    for(m=0;m<10;m++) if(gAns[m]!==undefined) cnt++;
+    document.getElementById("gSave").textContent = cnt<10 ? "답한 문항 "+cnt+" / 10" : "내 그릿 점수 보기";
+  };
+  document.getElementById("gSave").onclick=function(){
+    for(var m=0;m<10;m++) if(gAns[m]===undefined){ toast((m+1)+"번 문항이 비어 있어요"); return; }
+    var s=gritScore(gAns);
+    D.grit.push({ date:todayKey(), ans:gAns.slice(), total:s.total, pas:s.pas, per:s.per });
+    gEditing=false; gAns=[]; save(); renderGrit(); renderToday();
+    document.getElementById("gritCard").scrollIntoView({behavior:"smooth"});
+    toast("그릿 "+s.total.toFixed(1)+"점 · 오늘 탭에 방향이 생겼어요");
+  };
+  var ce=document.getElementById("gCancel");
+  if(ce) ce.onclick=function(){ gEditing=false; gAns=[]; renderGrit(); };
+}
+
 function renderLog(){
   var i, h="";
+  renderGrit();
   document.getElementById("seedN").textContent=D.seeds.length+" / 3";
   for(i=0;i<D.seeds.length;i++){
     var s=D.seeds[i], m=monthsAgo(s.from);
@@ -657,6 +858,15 @@ document.getElementById("exportBtn").onclick=function(){
   for(i=0;i<D.yt.length;i++){
     t+="- "+fmt(D.yt[i].date)+" | ① "+D.yt[i].q1+" | ② "+D.yt[i].q2+" | ③ "+D.yt[i].q3
      + (D.yt[i].q4?" | → "+D.yt[i].q4:"")+"\n";
+  }
+  t+="\n■ 그릿 방향 실천\n";
+  for(i=0;i<keys.length;i++) if(D.days[keys[i]].grit) t+=fmt(keys[i])+" 🔥 "+(D.days[keys[i]].gritText||"")+"\n";
+  t+="\n■ 그릿 검사 "+D.grit.length+"회\n";
+  for(i=0;i<D.grit.length;i++) t+="- "+fmt(D.grit[i].date)+" | 그릿 "+D.grit[i].total+" | 열정 "+D.grit[i].pas+" | 끈기 "+D.grit[i].per+"\n";
+  t+="\n■ 안 끝난 미룬 일\n";
+  for(i=0;i<keys.length;i++){
+    var pk=D.days[keys[i]].parked||[];
+    for(var j=0;j<pk.length;j++) if(!pk[j].done) t+="- "+fmt(keys[i])+" 미룸 | "+pk[j].t+"\n";
   }
   t+="\n■ 씨앗\n";
   for(i=0;i<D.seeds.length;i++) t+="- "+D.seeds[i].t+" ("+monthsAgo(D.seeds[i].from)+"개월째)\n";
