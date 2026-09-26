@@ -172,6 +172,8 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
   <div class="card">
     <h2><span class="badge b-am">아침</span> 🔥 오늘의 다짐</h2>
     <p class="hint">그릿 척도에서 열정 1 + 끈기 1. 하루 시작할 때 소리 내어 한 번 읽어보세요.</p>
+    <label class="f" for="goalIn" style="margin-top:0">🎯 이번 달 최상위 목표<small>오늘 할 일이 모두 이걸 돕고 있나요?</small></label>
+    <input type="text" id="goalIn" placeholder="예: 키 콘텐츠 1편 완성" maxlength="60" enterkeyhint="done" style="margin-bottom:12px">
     <div id="gritToday"></div>
   </div>
 
@@ -242,6 +244,19 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
 
   <div class="divider">지난 회고</div>
   <div id="revList"></div>
+
+  <div class="card" style="margin-top:22px">
+    <h2>🗓 월말 회고 <span class="badge b-am" id="monLabel"></span></h2>
+    <div class="gnav">
+      <button id="monPrev" aria-label="이전 달">‹</button>
+      <div id="monTitle"></div>
+      <button id="monNext" aria-label="다음 달">›</button>
+    </div>
+    <p class="hint" id="monGoal"></p>
+    <button class="btn ghost sm grmore" id="monPeek" style="margin:0 0 6px">이번 달 '오늘의 회고' 모아보기</button>
+    <div id="monPeekBox"></div>
+    <div id="monBox"></div>
+  </div>
 </section>
 
 <!-- ============ 유튜브 소재 ============ -->
@@ -311,7 +326,7 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
 "use strict";
 var KEY = "kairos_v1";
 var DAYS = ["일","월","화","수","목","금","토"];
-var D = { days:{}, reviews:[], yt:[], seeds:[], grit:[], lastAuto:"" };
+var D = { days:{}, reviews:[], yt:[], seeds:[], grit:[], goals:{}, monthly:{}, lastAuto:"" };
 
 /* ---------- 그릿 (앤절라 더크워스 그릿 척도) ----------
    홀수 문항 = 열정(뒤집어 채점), 짝수 문항 = 끈기. 총점÷10 = 그릿 점수 */
@@ -329,31 +344,40 @@ var GQ = [
 ];
 var GOPT = ["전혀<br>아니다","아니다","그런<br>편","그렇다","매우<br>그렇다"];
 /* 아침 다짐: 문항을 '오늘 나는 ~' 으로 (홀수 문항은 뒤집어서) */
+/* 월별 로드맵(아티팩트)의 '오늘의 회고' 10문항과 짝을 맞춘 다짐 — 같은 번호끼리 한 쌍 */
 var GAM = [
-  "오늘 나는 새로운 아이디어와 프로젝트 때문에 기존의 것에 소홀해지지 않는다.",
-  "오늘 나는 실패해도 실망하지 않는다. 쉽게 포기하지 않는다.",
-  "오늘 나는 한 가지 목표를 세웠으면 다른 목표로 갈아타지 않는다.",
-  "오늘 나는 노력가로 산다.",
-  "오늘 나는 몇 개월 이상 걸리는 일에도 계속 집중한다.",
+  "오늘 나는 새로운 아이디어가 끌려도, 최상위 목표를 소홀히 하지 않는다.",
+  "오늘 나는 뜻대로 안 돼도 실망하지 않는다. 쉽게 포기하지 않고 다음 걸음을 뗀다.",
+  "오늘 나는 이번 달 목표를 붙들고, 다른 목표로 새지 않는다.",
+  "오늘 나는 노력가다. 의미 있는 노력 한 가지를 들인다.",
+  "오늘 나는 몇 달짜리 목표에 시간을 쓴다. 집중이 끊겨도 다시 돌아온다.",
   "오늘 나는 시작한 일은 반드시 끝낸다.",
-  "오늘 나는 관심사를 바꾸지 않고, 하던 것을 이어간다.",
-  "오늘 나는 성실하다. 결코 포기하지 않는다.",
-  "오늘 나는 잠깐 사로잡힌 것 때문에 가던 길에서 관심을 거두지 않는다.",
-  "오늘 나는 좌절을 딛고 중요한 도전을 해낸다."
+  "오늘 나는 관심사를 갈아타지 않고, 1년 뒤에도 하고 있을 일에 마음을 준다.",
+  "오늘 나는 성실하다. 하기 싫어도 한다. 결코 포기하지 않는다.",
+  "오늘 나는 잠깐 사로잡혔다 식는 것에 휘둘리지 않고, 가던 길을 지킨다.",
+  "오늘 나는 작은 좌절을 딛고 중요한 도전을 해낸다."
 ];
-/* 밤 회고 질문: 같은 문항을 돌아보는 질문으로 */
+/* 밤 회고 질문: 월별 로드맵 아티팩트의 '오늘의 회고'와 같은 문항 */
 var GPM = [
-  "오늘 새로 끌린 아이디어가 있었나? 그것 때문에 원래 하던 일을 소홀히 하진 않았나?",
+  "오늘 새로 끌린 아이디어가 있었나? 최상위 목표와 이어지나, 딴 길인가?",
   "오늘 뜻대로 안 된 일은? 그다음에 무엇을 했나?",
-  "오늘 한 일은 내가 세운 목표로 이어졌나, 다른 목표로 새지 않았나?",
-  "오늘 내가 가장 애쓴 순간은 언제였나?",
-  "몇 달 걸리는 내 일(씨앗)에 오늘 손을 댔나? 얼마나?",
-  "오늘 시작한 일 중 끝낸 것과 못 끝낸 것은? 못 끝낸 건 언제 끝낼까?",
-  "오늘 관심이 딴 데로 간 순간이 있었나? 다시 원래 하던 일로 돌아왔나?",
-  "하기 싫었는데 그래도 한 일은?",
-  "요즘 금방 식어버린 관심거리가 있나? 오늘은 가던 길을 지켰나?",
-  "오늘 좌절한 순간이 있었다면, 그걸 딛고 한 걸음 나아간 게 있나?"
+  "오늘 한 일 중 이번 달 목표에서 벗어난 것은? 왜 그쪽으로 갔나?",
+  "오늘 들인 노력 중 가장 의미 있었던 한 가지는?",
+  "몇 달짜리 목표에 오늘 쓴 시간은? 집중이 끊긴 순간은 언제였나?",
+  "오늘 시작한 일 중 끝낸 것과 남긴 것은? 남긴 이유는?",
+  "오늘 관심 간 것 중 1년 뒤에도 하고 있을 것 같은 건?",
+  "하기 싫었지만 그래도 한 일은?",
+  "요즘 시들해진 게 있나? 지루해서인가, 방향이 틀려서인가?",
+  "오늘 작은 좌절을 딛고 해낸 것이 있다면?"
 ];
+/* 월말 회고: 월별 로드맵 아티팩트와 같은 4문항 */
+var GMON = [
+  ["rv1","이번 달 회고를 훑어보니, 자꾸 딴 길로 새게 만든 건?","열정"],
+  ["rv2","못 한 날(✕)이 나온 뒤 다시 이어간 순간은?","끈기"],
+  ["rv3","다음 달에 뺄 항목 하나, 남길 항목 하나",""],
+  ["rv4","메모",""]
+];
+function ymKey(k){ return k.slice(0,7); }
 var GPCT = [[4.9,99],[4.7,95],[4.5,90],[4.3,80],[4.1,70],[3.9,60],[3.8,50],[3.5,40],[3.3,30],[3.0,20],[2.5,10]];
 function gritScore(ans){ /* ans[i] = 0(전혀)~4(매우) */
   var pas=0, per=0, i;
@@ -368,8 +392,8 @@ function gritPct(s){
 }
 function lastGrit(){ return D.grit.length ? D.grit[D.grit.length-1] : null; }
 function dayNum(k){ var d=parseYmd(k); return Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5); }
-/* 그날의 두 문항: [열정(홀수번), 끈기(짝수번)] — 5일에 한 바퀴 */
-function gritPair(k){ var p=dayNum(k)%5; return [p*2, p*2+1]; }
+/* 그날의 두 문항: [열정, 끈기] — 날짜(일) 기준 5일에 한 바퀴, 로드맵 아티팩트와 같은 날 같은 질문 */
+function gritPair(k){ var p=(parseYmd(k).getDate()-1)%5; return [p*2, p*2+1]; }
 var gAns=[], gEditing=false, grDay="", grMore=false;
 
 /* ---------- 저장 / 불러오기 ---------- */
@@ -383,6 +407,8 @@ function load(){
       D.yt       = p.yt || [];
       D.seeds    = p.seeds || [];
       D.grit     = p.grit || [];
+      D.goals    = p.goals || {};
+      D.monthly  = p.monthly || {};
       for(var pk in D.days) normPark(D.days[pk]);
       D.lastAuto = p.lastAuto || "";
     }
@@ -448,7 +474,7 @@ function go(v){
   for(i=0;i<btns.length;i++) btns[i].classList.toggle("on", btns[i].getAttribute("data-v")===v);
   document.getElementById("hsub").textContent=TITLES[v];
   window.scrollTo(0,0);
-  if(v==="review") renderReview();
+  if(v==="review"){ renderReview(); renderMonthly(); }
   if(v==="log") renderLog();
 }
 
@@ -760,6 +786,7 @@ function renderGritRev(){
   var today=todayKey(), k=grDay||today, v=D.days[k], ga=(v&&v.ga)||{}, gp=gritPair(k), h="", i;
   document.getElementById("grDate").textContent = fmtLong(parseYmd(k)).replace(/요일$/,"")+(k===today?" · 오늘":"");
   document.getElementById("grNext").disabled = (k>=today);
+  if(D.goals[ymKey(k)]) h+='<p class="hint">🎯 최상위 목표: <b>'+esc(D.goals[ymKey(k)])+'</b></p>';
   h+=grQ(k, gp[0], "열정", ga)+grQ(k, gp[1], "끈기", ga);
   if(grMore){
     for(i=0;i<10;i++) if(i!==gp[0] && i!==gp[1]) h+=grQ(k, i, i%2===0?"열정":"끈기", ga);
@@ -786,6 +813,53 @@ document.getElementById("grNext").onclick=function(){
   var d=parseYmd(grDay||todayKey()); d.setDate(d.getDate()+1);
   var n=ymd(d); if(n>todayKey()) return; grDay=n; grMore=false; renderGritRev();
 };
+
+/* ---------- 이번 달 최상위 목표 ---------- */
+document.getElementById("goalIn").addEventListener("input",function(){
+  var m=ymKey(todayKey()), v=this.value.trim();
+  if(v) D.goals[m]=v; else delete D.goals[m];
+  save();
+});
+document.getElementById("goalIn").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); this.blur(); } });
+
+/* ---------- 월말 회고 ---------- */
+var monKey="", monPeek=false;
+function monAdd(m, n){ var p=m.split("-"), d=new Date(+p[0], +p[1]-1+n, 1); return ymd(d).slice(0,7); }
+function monName(m){ var p=m.split("-"); return p[0]+"년 "+(+p[1])+"월"; }
+function renderMonthly(){
+  var cur=ymKey(todayKey()), m=monKey||cur, o=D.monthly[m]||{}, h="", i;
+  var p=m.split("-"), last=new Date(+p[0], +p[1], 0).getDate(), left=last-new Date().getDate();
+  document.getElementById("monTitle").textContent=monName(m);
+  document.getElementById("monLabel").textContent = m===cur ? (left<=2 ? "이번 달 마감 "+(left===0?"오늘":left+"일 전") : "이번 달") : "";
+  document.getElementById("monNext").disabled = (m>=cur);
+  document.getElementById("monGoal").innerHTML = D.goals[m] ? '🎯 이 달의 최상위 목표: <b>'+esc(D.goals[m])+'</b>' : '이 달의 최상위 목표는 적지 않았어요.';
+  for(i=0;i<GMON.length;i++){
+    h+='<label class="f">'+esc(GMON[i][1])+(GMON[i][2]?' <span class="gsub">'+GMON[i][2]+'</span>':'')+'</label>'
+     +'<textarea rows="3" data-mon="'+GMON[i][0]+'">'+esc(o[GMON[i][0]]||"")+'</textarea>';
+  }
+  var box=document.getElementById("monBox");
+  box.innerHTML=h;
+  var ts=box.querySelectorAll("textarea[data-mon]");
+  for(i=0;i<ts.length;i++) ts[i].oninput=function(){
+    var mm=monKey||ymKey(todayKey());
+    if(!D.monthly[mm]) D.monthly[mm]={};
+    D.monthly[mm][this.getAttribute("data-mon")]=this.value; save();
+  };
+  /* 이 달의 '오늘의 회고' 답 모아보기 */
+  var pb=document.getElementById("monPeekBox"), keys=Object.keys(D.days).sort(), l="", n=0;
+  for(i=0;i<keys.length;i++){
+    if(ymKey(keys[i])!==m) continue;
+    var ga=D.days[keys[i]].ga; if(!ga) continue;
+    for(var q in ga){ n++; l+='<div class="wkline"><div class="d">'+fmt(keys[i])+'</div><div class="t"><em>'+esc(GPM[q])+'</em><br>'+esc(ga[q])+'</div></div>'; }
+  }
+  document.getElementById("monPeek").textContent = monPeek ? "모아보기 접기" : "이 달 '오늘의 회고' 모아보기 ("+n+"개)";
+  pb.innerHTML = monPeek ? (l ? '<div class="wk" style="margin-bottom:6px">'+l+'</div>' : '<p class="empty" style="padding:12px">이 달에 쓴 오늘의 회고가 없어요.</p>') : "";
+}
+document.getElementById("monPrev").onclick=function(){ monKey=monAdd(monKey||ymKey(todayKey()),-1); renderMonthly(); };
+document.getElementById("monNext").onclick=function(){
+  var n=monAdd(monKey||ymKey(todayKey()),1); if(n>ymKey(todayKey())) return; monKey=n; renderMonthly();
+};
+document.getElementById("monPeek").onclick=function(){ monPeek=!monPeek; renderMonthly(); };
 
 /* ---------- 그릿 검사 ---------- */
 function renderGrit(){
@@ -923,6 +997,14 @@ document.getElementById("exportBtn").onclick=function(){
     var pk=D.days[keys[i]].parked||[];
     for(var j=0;j<pk.length;j++) if(!pk[j].done) t+="- "+fmt(keys[i])+" 미룸 | "+pk[j].t+"\n";
   }
+  t+="\n■ 월말 회고\n";
+  var ms=Object.keys(D.monthly).concat(Object.keys(D.goals)).sort(), seen={};
+  for(i=0;i<ms.length;i++){
+    if(seen[ms[i]]) continue; seen[ms[i]]=1;
+    var mo=D.monthly[ms[i]]||{};
+    t+="- "+monName(ms[i])+(D.goals[ms[i]]?" | 🎯 "+D.goals[ms[i]]:"")+"\n";
+    for(var gm=0;gm<GMON.length;gm++) if(mo[GMON[gm][0]]) t+="   "+GMON[gm][1]+" → "+mo[GMON[gm][0]]+"\n";
+  }
   t+="\n■ 씨앗\n";
   for(i=0;i<D.seeds.length;i++) t+="- "+D.seeds[i].t+" ("+monthsAgo(D.seeds[i].from)+"개월째)\n";
   copy(t);
@@ -960,7 +1042,8 @@ function boot(){
   load();
   bootDay=todayKey();
   document.getElementById("hdate").textContent=fmtLong(new Date());
-  grDay=""; grMore=false;
+  grDay=""; grMore=false; monKey=""; monPeek=false;
+  document.getElementById("goalIn").value = D.goals[ymKey(todayKey())] || "";
   renderToday(); renderYt(); renderGritRev();
   /* 일요일이면 하루 한 번 자동으로 회고 화면을 연다 */
   var now=new Date(), wk=weekKey(now);
