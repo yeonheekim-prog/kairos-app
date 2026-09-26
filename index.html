@@ -142,6 +142,15 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
 .gbar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:4px 0 10px}
 .gbar i{display:block;height:100%;background:var(--gold);border-radius:99px}
 .gbar.b i{background:var(--blue)}
+.gtag{display:inline-block;font-size:11px;font-weight:800;color:var(--gold);border:1.5px solid var(--gold);border-radius:999px;padding:0 7px;margin-right:7px;vertical-align:2px}
+.gnav{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:999px;margin-bottom:10px}
+.gnav button{min-width:48px;min-height:46px;font-size:22px;color:var(--sub)}
+.gnav button:disabled{opacity:.25}
+.gnav div{flex:1;text-align:center;font-weight:800;font-size:15px}
+.grq{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.grq .qt{font-size:14.5px;margin-bottom:8px;word-break:break-word}
+.grq .gsub{font-size:11.5px;color:var(--sub);font-weight:700}
+.grmore{border-style:dashed}
 .quote{font-size:13.5px;color:var(--sub);text-align:center;line-height:1.65;padding:8px 6px 2px;margin:0}
 </style>
 </head>
@@ -161,7 +170,8 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
   <div id="sunBanner"></div>
 
   <div class="card">
-    <h2>🔥 오늘의 방향 <span class="badge b-gray">그릿</span></h2>
+    <h2><span class="badge b-am">아침</span> 🔥 오늘의 다짐</h2>
+    <p class="hint">그릿 척도에서 열정 1 + 끈기 1. 하루 시작할 때 소리 내어 한 번 읽어보세요.</p>
     <div id="gritToday"></div>
   </div>
 
@@ -175,6 +185,17 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
     <h2><span class="badge b-pm">밤 2분</span> 오늘의 한 줄</h2>
     <p class="hint">나중에 돌아보면 의미 있을 것 같은 순간 한 줄.<br>없으면 <b>없음</b>을 눌러도 됩니다. 그것도 기록이에요.</p>
     <div id="pmBox"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="badge b-pm">밤</span> 🌙 오늘의 회고</h2>
+    <p class="hint">그릿 10문항을 하루 두 개씩(열정 1 + 끈기 1) 돌아가며 물어요. 5일이면 한 바퀴예요. 쓰는 대로 저장돼요.</p>
+    <div class="gnav">
+      <button id="grPrev" aria-label="전날">‹</button>
+      <div id="grDate"></div>
+      <button id="grNext" aria-label="다음날">›</button>
+    </div>
+    <div id="grBox"></div>
   </div>
 
   <div class="card">
@@ -307,18 +328,31 @@ var GQ = [
   "나는 좌절을 딛고 중요한 도전에 성공한 적이 있다."
 ];
 var GOPT = ["전혀<br>아니다","아니다","그런<br>편","그렇다","매우<br>그렇다"];
-/* 문항마다 '오늘 하루 이렇게 살기' 한 줄 */
-var GDIR = [
-  "새 아이디어가 떠오르면 '미룬 일'에 적어만 두고, 하던 일부터 끝까지.",
-  "오늘 뭔가 잘 안 되면 실망 대신 '딱 한 번만 더' 해보기.",
-  "오늘의 1개를 이번 달 목표와 이어지는 일로 고르기. 목표를 갈아타지 않기.",
-  "잘했냐보다 '오늘도 했냐'에 점수 주기. 노력한 시간 자체가 성과.",
-  "씨앗 하나에 오늘 10분만 물 주기. 몇 달짜리 일은 매일 조금씩.",
-  "새로 벌이지 말고, 벌여둔 것 하나를 오늘 마무리하기.",
-  "새로운 관심거리 대신, 전부터 하던 일 하나를 오늘 이어가기.",
-  "하기 싫어도 정한 시간에 일단 자리에 앉기. 시작만 하면 된다.",
-  "오늘 끌리는 새 것은 바로 시작하지 말고 1주일 묵혀보기.",
-  "요즘 막힌 일 하나를 아주 작게 쪼개서 첫 걸음만 떼기."
+/* 아침 다짐: 문항을 '오늘 나는 ~' 으로 (홀수 문항은 뒤집어서) */
+var GAM = [
+  "오늘 나는 새로운 아이디어와 프로젝트 때문에 기존의 것에 소홀해지지 않는다.",
+  "오늘 나는 실패해도 실망하지 않는다. 쉽게 포기하지 않는다.",
+  "오늘 나는 한 가지 목표를 세웠으면 다른 목표로 갈아타지 않는다.",
+  "오늘 나는 노력가로 산다.",
+  "오늘 나는 몇 개월 이상 걸리는 일에도 계속 집중한다.",
+  "오늘 나는 시작한 일은 반드시 끝낸다.",
+  "오늘 나는 관심사를 바꾸지 않고, 하던 것을 이어간다.",
+  "오늘 나는 성실하다. 결코 포기하지 않는다.",
+  "오늘 나는 잠깐 사로잡힌 것 때문에 가던 길에서 관심을 거두지 않는다.",
+  "오늘 나는 좌절을 딛고 중요한 도전을 해낸다."
+];
+/* 밤 회고 질문: 같은 문항을 돌아보는 질문으로 */
+var GPM = [
+  "오늘 새로 끌린 아이디어가 있었나? 그것 때문에 원래 하던 일을 소홀히 하진 않았나?",
+  "오늘 뜻대로 안 된 일은? 그다음에 무엇을 했나?",
+  "오늘 한 일은 내가 세운 목표로 이어졌나, 다른 목표로 새지 않았나?",
+  "오늘 내가 가장 애쓴 순간은 언제였나?",
+  "몇 달 걸리는 내 일(씨앗)에 오늘 손을 댔나? 얼마나?",
+  "오늘 시작한 일 중 끝낸 것과 못 끝낸 것은? 못 끝낸 건 언제 끝낼까?",
+  "오늘 관심이 딴 데로 간 순간이 있었나? 다시 원래 하던 일로 돌아왔나?",
+  "하기 싫었는데 그래도 한 일은?",
+  "요즘 금방 식어버린 관심거리가 있나? 오늘은 가던 길을 지켰나?",
+  "오늘 좌절한 순간이 있었다면, 그걸 딛고 한 걸음 나아간 게 있나?"
 ];
 var GPCT = [[4.9,99],[4.7,95],[4.5,90],[4.3,80],[4.1,70],[3.9,60],[3.8,50],[3.5,40],[3.3,30],[3.0,20],[2.5,10]];
 function gritScore(ans){ /* ans[i] = 0(전혀)~4(매우) */
@@ -334,16 +368,9 @@ function gritPct(s){
 }
 function lastGrit(){ return D.grit.length ? D.grit[D.grit.length-1] : null; }
 function dayNum(k){ var d=parseYmd(k); return Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5); }
-/* 오늘의 방향: 검사했으면 약한 쪽 문항에서, 아니면 10개를 돌아가며 */
-function gritDirIdx(k){
-  var g=lastGrit(), n=dayNum(k), pool=[0,1,2,3,4,5,6,7,8,9];
-  if(g){
-    if(g.pas<g.per) pool=[0,2,4,6,8];
-    else if(g.per<g.pas) pool=[1,3,5,7,9];
-  }
-  return pool[n % pool.length];
-}
-var gAns=[], gEditing=false;
+/* 그날의 두 문항: [열정(홀수번), 끈기(짝수번)] — 5일에 한 바퀴 */
+function gritPair(k){ var p=dayNum(k)%5; return [p*2, p*2+1]; }
+var gAns=[], gEditing=false, grDay="", grMore=false;
 
 /* ---------- 저장 / 불러오기 ---------- */
 function load(){
@@ -449,18 +476,12 @@ function renderToday(){
   }
   document.getElementById("pmBox").innerHTML=h;
 
-  /* 오늘의 방향 (그릿) */
-  var g=lastGrit(), gi=gritDirIdx(k), gtxt=GDIR[gi];
-  h='<div class="saved">'+esc(gtxt)+'</div>';
-  if(g){
-    var weak = g.pas<g.per ? "열정(한 우물 파기)" : (g.per<g.pas ? "끈기(포기 안 하기)" : "");
-    h+='<p class="hint" style="margin:9px 0 0">내 그릿 <b>'+g.total.toFixed(1)+'</b> · 열정 '+g.pas.toFixed(1)+' / 끈기 '+g.per.toFixed(1)
-      +(weak?'<br>그래서 요즘은 <b>'+weak+'</b> 쪽을 키우는 방향이 나옵니다.':'')+'</p>';
-  }else{
-    h+='<p class="hint" style="margin:9px 0 0">그릿 검사(2분)를 하면 내 약한 쪽에 맞춰 방향이 나와요.</p>'
-      +'<button class="link" id="gGo">→ 그릿 검사하러 가기</button>';
-  }
-  h+='<div class="meta"><button class="link" id="gDone">'+(d.grit?"✅ 오늘 이렇게 살았다":"○ 밤에 체크: 오늘 이렇게 살았나?")+'</button></div>';
+  /* 아침 다짐 (그릿 열정 1 + 끈기 1) */
+  var g=lastGrit(), gp=gritPair(k);
+  h='<div class="saved"><span class="gtag">열정</span>'+esc(GAM[gp[0]])+'</div>'
+   +'<div class="saved" style="margin-top:8px"><span class="gtag">끈기</span>'+esc(GAM[gp[1]])+'</div>';
+  if(g) h+='<p class="hint" style="margin:9px 0 0">내 그릿 <b>'+g.total.toFixed(1)+'</b> · 열정 '+g.pas.toFixed(1)+' / 끈기 '+g.per.toFixed(1)+'</p>';
+  else h+='<button class="link" id="gGo">→ 내 그릿 점수 알아보기 (2분)</button>';
   document.getElementById("gritToday").innerHTML=h;
 
   /* 미룬 일: 날짜가 지나도 완료 안 한 건 계속 보인다 */
@@ -536,11 +557,6 @@ function bindToday(){
   el=document.getElementById("pmEdit");
   if(el) el.onclick=function(){ d.night=""; save(); renderToday(); };
 
-  el=document.getElementById("gDone");
-  if(el) el.onclick=function(){
-    d.grit=!d.grit; d.gritText = d.grit ? GDIR[gritDirIdx(k)] : "";
-    save(); renderToday(); if(d.grit) toast("한 우물, 오늘도 한 삽 🔥");
-  };
   el=document.getElementById("gGo");
   if(el) el.onclick=function(){
     go("log");
@@ -590,7 +606,7 @@ function weekLines(rows){
     var v=rows[i].v, txt="";
     if(v.morning) txt+='<div>☀️ '+esc(v.morning)+(v.done?' <span class="chip">완료</span>':'')+'</div>';
     if(v.night)   txt+='<div>'+(v.night==="없음"?'<em>🌙 없음</em>':'🌙 '+esc(v.night))+'</div>';
-    if(v.grit)    txt+='<div>🔥 '+esc(v.gritText||"그릿 방향 실천")+' <span class="chip">실천</span></div>';
+    if(v.ga) for(var gq in v.ga) txt+='<div>🔥 <em>'+esc(GPM[gq])+'</em><br>'+esc(v.ga[gq])+'</div>';
     if(!txt) continue;
     cnt++;
     h+='<div class="wkline"><div class="d">'+fmt(rows[i].k)+'</div><div class="t">'+txt+'</div></div>';
@@ -735,6 +751,42 @@ document.getElementById("seedIn").addEventListener("keydown",function(e){
   if(e.key==="Enter"){ e.preventDefault(); document.getElementById("seedAdd").click(); }
 });
 
+/* ---------- 밤 그릿 회고 ---------- */
+function grQ(k, qi, tag, ga){
+  return '<div class="grq"><div class="qt">'+esc(GPM[qi])+' <span class="gsub">'+tag+'</span></div>'
+    +'<textarea rows="3" data-gr="'+qi+'" data-grk="'+k+'">'+esc(ga[qi]||"")+'</textarea></div>';
+}
+function renderGritRev(){
+  var today=todayKey(), k=grDay||today, v=D.days[k], ga=(v&&v.ga)||{}, gp=gritPair(k), h="", i;
+  document.getElementById("grDate").textContent = fmtLong(parseYmd(k)).replace(/요일$/,"")+(k===today?" · 오늘":"");
+  document.getElementById("grNext").disabled = (k>=today);
+  h+=grQ(k, gp[0], "열정", ga)+grQ(k, gp[1], "끈기", ga);
+  if(grMore){
+    for(i=0;i<10;i++) if(i!==gp[0] && i!==gp[1]) h+=grQ(k, i, i%2===0?"열정":"끈기", ga);
+    h+='<button class="btn ghost sm grmore" id="grMore">나머지 질문 접기</button>';
+  }else{
+    var extra=0; for(i=0;i<10;i++) if(i!==gp[0] && i!==gp[1] && ga[i]) extra++;
+    h+='<button class="btn ghost sm grmore" id="grMore">나머지 질문 8개도 보기'+(extra?' ('+extra+'개 씀)':'')+'</button>';
+  }
+  var box=document.getElementById("grBox");
+  box.innerHTML=h;
+  var ts=box.querySelectorAll("textarea[data-gr]");
+  for(i=0;i<ts.length;i++) ts[i].oninput=function(){
+    var dd=day(this.getAttribute("data-grk")), qi=this.getAttribute("data-gr");
+    if(!dd.ga) dd.ga={};
+    if(this.value.trim()) dd.ga[qi]=this.value; else delete dd.ga[qi];
+    save();
+  };
+  document.getElementById("grMore").onclick=function(){ grMore=!grMore; renderGritRev(); };
+}
+document.getElementById("grPrev").onclick=function(){
+  var d=parseYmd(grDay||todayKey()); d.setDate(d.getDate()-1); grDay=ymd(d); grMore=false; renderGritRev();
+};
+document.getElementById("grNext").onclick=function(){
+  var d=parseYmd(grDay||todayKey()); d.setDate(d.getDate()+1);
+  var n=ymd(d); if(n>todayKey()) return; grDay=n; grMore=false; renderGritRev();
+};
+
 /* ---------- 그릿 검사 ---------- */
 function renderGrit(){
   var g=lastGrit(), box=document.getElementById("gritBox"), h="", i, c;
@@ -859,8 +911,11 @@ document.getElementById("exportBtn").onclick=function(){
     t+="- "+fmt(D.yt[i].date)+" | ① "+D.yt[i].q1+" | ② "+D.yt[i].q2+" | ③ "+D.yt[i].q3
      + (D.yt[i].q4?" | → "+D.yt[i].q4:"")+"\n";
   }
-  t+="\n■ 그릿 방향 실천\n";
-  for(i=0;i<keys.length;i++) if(D.days[keys[i]].grit) t+=fmt(keys[i])+" 🔥 "+(D.days[keys[i]].gritText||"")+"\n";
+  t+="\n■ 그릿 회고\n";
+  for(i=0;i<keys.length;i++){
+    var ga=D.days[keys[i]].ga;
+    if(ga) for(var gq in ga) t+=fmt(keys[i])+" 🔥 Q. "+GPM[gq]+"\n   → "+ga[gq]+"\n";
+  }
   t+="\n■ 그릿 검사 "+D.grit.length+"회\n";
   for(i=0;i<D.grit.length;i++) t+="- "+fmt(D.grit[i].date)+" | 그릿 "+D.grit[i].total+" | 열정 "+D.grit[i].pas+" | 끈기 "+D.grit[i].per+"\n";
   t+="\n■ 안 끝난 미룬 일\n";
@@ -905,7 +960,8 @@ function boot(){
   load();
   bootDay=todayKey();
   document.getElementById("hdate").textContent=fmtLong(new Date());
-  renderToday(); renderYt();
+  grDay=""; grMore=false;
+  renderToday(); renderYt(); renderGritRev();
   /* 일요일이면 하루 한 번 자동으로 회고 화면을 연다 */
   var now=new Date(), wk=weekKey(now);
   if(now.getDay()===0 && !reviewOf(wk) && D.lastAuto!==bootDay){
