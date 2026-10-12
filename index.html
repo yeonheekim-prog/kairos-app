@@ -281,6 +281,7 @@ nav button .dot{position:absolute;top:9px;right:calc(50% - 21px);width:8px;heigh
   </div>
 
   <div class="divider" id="ytCount">모은 소재</div>
+  <button class="btn ghost sm" id="ytCopyAll" style="margin-bottom:12px">📋 모은 소재 전부 복사</button>
   <div id="ytList"></div>
 </section>
 
@@ -731,8 +732,22 @@ document.getElementById("ytSave").onclick=function(){
   document.getElementById("y4").value="";
   renderYt(); toast("소재 "+D.yt.length+"개째 저장 🎬"); window.scrollTo(0,0);
 };
+function ytText(y){
+  return fmt(y.date)
+    +"\n① 한국이랑 달랐던 점: "+y.q1
+    +"\n② 당황·화난 포인트: "+y.q2
+    +"\n③ 미리 알았으면 준비했을 것(★상품): "+y.q3
+    +(y.q4?"\n→ 상품/영상 제목: "+y.q4:"");
+}
+document.getElementById("ytCopyAll").onclick=function(){
+  if(!D.yt.length){ toast("아직 모은 소재가 없어요"); return; }
+  var t="[유튜브 소재 "+D.yt.length+"건]\n", i;
+  for(i=0;i<D.yt.length;i++) t+="\n"+(i+1)+". "+ytText(D.yt[i])+"\n";
+  copy(t);
+};
 function renderYt(){
   document.getElementById("ytCount").textContent="모은 소재 "+D.yt.length+"개";
+  document.getElementById("ytCopyAll").style.display=D.yt.length?"":"none";
   var h="", i;
   for(i=0;i<D.yt.length;i++){
     var y=D.yt[i];
@@ -757,11 +772,7 @@ function renderYt(){
     var id=+this.getAttribute("data-cyt"), y=null, j;
     for(j=0;j<D.yt.length;j++) if(D.yt[j].id===id) y=D.yt[j];
     if(!y) return;
-    copy("[유튜브 소재] "+fmt(y.date)
-      +"\n① 한국이랑 달랐던 점: "+y.q1
-      +"\n② 당황·화난 포인트: "+y.q2
-      +"\n③ 미리 알았으면 준비했을 것(★상품): "+y.q3
-      +(y.q4?"\n→ 상품/영상 제목: "+y.q4:""));
+    copy("[유튜브 소재] "+ytText(y));
   };
 }
 
